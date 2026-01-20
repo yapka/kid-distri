@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: kid-backend
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:10000
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kid-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+    plan: starter
+    autoDeploy: true
+    rootDir: Backend
+
+  - type: web
+    name: kid-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s dist -l 3000
+    envVars:
+      - key: VITE_API_URL
+        value: https://kid-backend.onrender.com/api/
+    plan: starter
+    autoDeploy: true
+    rootDir: Frontent/frontend-app
+
+databases:
+  - name: kid-db
+    plan: free
+    databaseName: kid_livraison
+    user: kid_user
